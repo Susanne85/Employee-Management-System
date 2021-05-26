@@ -1,31 +1,23 @@
 const mysql = require('mysql');
 const inquirer = require('inquirer');
-
-const connection = mysql.createConnection({
-    host: 'localhost',
-
-    // Your port; if not 3306
-    port: 3306,
-
-    // Your username
-    user: 'root',
-
-    // Be sure to update with your own MySQL password!
-    password: '2Chiret9?A13',
-    database: 'employee_management_db'
-});
+const getConnection = require("./get-connection");
 
 const Questions = require('./lib/questions.js');
 
 async function addEmployee(connection) {
-    connection.query("SELECT * FROM role", async function (error, allRoles) {
-        if (error) throw error;
+    try {
+        const result = await connection.query("SELECT * FROM role",);
+        // convert the first element in the result array
+        let allRoles = Object.values(JSON.parse(JSON.stringify(result[0])));
+        //console.log("Roles", allRoles);
         const roleTitles = allRoles.map(qs => qs.title);
-        connection.query("SELECT * FROM manager", async function (error, allManagers) {
-            if (error) throw error;
+        try {
+            const result = await connection.query("SELECT * FROM manager");
+            let allManagers = Object.values(JSON.parse(JSON.stringify(result[0])));
+
             let managerList = allManagers.map(qs => qs.name);
             managerList.push('None', 'New Manager');
-            console.log('Manager List ', managerList);
+            //console.log('Manager List ', managerList);
             const employeeQuestions = Questions.employeeQuestions.concat(
                 {
                     type: "list",
@@ -40,7 +32,7 @@ async function addEmployee(connection) {
                     choices: managerList
                 }
             )
-            // Get the list of role titles from roles table;
+            //Get the list of role titles from roles table;
 
             const employeeAnswers = await inquirer.prompt(employeeQuestions);
 
@@ -48,13 +40,14 @@ async function addEmployee(connection) {
             //From allRoles, get the id from the Role table and make this a foreign key in the employee table
             //Using the department_ID from the role table get the managers ID from the department table
             //Update the employee table  with firstname, lastname and roleID
-            console.log('got to here'); let roleId = allRoles.find(roleItem => roleItem.title === employeeAnswers.title);
-            let managerId ='';
+            
+            let roleId = allRoles.find(roleItem => roleItem.title === employeeAnswers.title);
+            let managerId = '';
 
             if (employeeAnswers.name === 'New Manager') {
                 // ask another question to get New Managers Name,
                 // Update Manager table Get Manager ID
-                
+
                 const managerAnswers = await inquirer.prompt(Questions.managerQuestions);
                 let managerId = managerAnswers.managerName;
                 console.log('New Managers Name', managerAnswers.managerName, managerId);
@@ -62,24 +55,27 @@ async function addEmployee(connection) {
 
             if (employeeAnswers.name !== 'None') {
                 let managerId = allManagers.find(managerItem => managerItem.name === employeeAnswers.name);
+
+                console.log("Update database with ", employeeAnswers.firstName, employeeAnswers.lastName, roleId.id, managerId.name);
+
+                // connection.query(
+                //      'INSERT INTO employee (firstName, lastName, role_id, department_id) VALUES (?,?,?,?)',
+                //     [employeeAnswers.firstName, employeeAnswers.lastName, roleId.id, roleId.departmentId],
+                //      function (error, results) {
+                //          console.log(`${results.affectedRows} employee inserted!\n`);
+                //     }
+                // );
+                mainMenu();
             }
 
-            console.log("Manager Department ID", managerId);
-
-            console.log("Update database with ", employeeAnswers.firstName, employeeAnswers.lastName, roleId.id, managerId.id);
-
-            // connection.query(
-            //      'INSERT INTO employee (firstName, lastName, role_id, department_id) VALUES (?,?,?,?)',
-            //     [employeeAnswers.firstName, employeeAnswers.lastName, roleId.id, roleId.departmentId],
-            //      function (error, results) {
-            //          console.log(`${results.affectedRows} employee inserted!\n`);
-            //     }
-            // );
-            mainMenu();
-        });
-    });
-
+        } catch (error) {
+            console.log('error is ', error);
+        }
+    } catch (error) {
+        console.log('error is ', error);
+    }
 }
+
 async function mainMenu(connection) {
     const questions = Questions.mainMenuQuestions;
     const mainMenuAnswers = await inquirer.prompt(questions)
@@ -115,8 +111,9 @@ async function mainMenu(connection) {
     }
 }
 
-connection.connect((error) => {
-    if (error) throw error;
-    console.log(`connected as id ${connection.threadId}`);
-    mainMenu(connection);
-});
+async function main() {
+    const connection = await getConnection();
+    mainMenu(connection)
+}
+
+main();
