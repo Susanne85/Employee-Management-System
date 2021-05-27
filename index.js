@@ -2,7 +2,9 @@ const mysql = require('mysql');
 const inquirer = require('inquirer');
 const getConnection = require("./get-connection");
 
-const Questions = require('./lib/questions.js');
+const Questions = require('./lib/questions');
+const removeEmployee = require('./lib/removeEmployee.js');
+const e = require('express');
 
 async function addEmployee(connection) {
     try {
@@ -27,7 +29,6 @@ async function addEmployee(connection) {
                 },
                 {
                     type: "list",
-                    message: "Who is their manager",
                     name: "name",
                     choices: managerList
                 }
@@ -40,9 +41,9 @@ async function addEmployee(connection) {
             //From allRoles, get the id from the Role table and make this a foreign key in the employee table
             //Using the department_ID from the role table get the managers ID from the department table
             //Update the employee table  with firstname, lastname and roleID
-            
+
             let roleId = allRoles.find(roleItem => roleItem.title === employeeAnswers.title);
-            let managerId = '';
+            let managerId = null;
 
             if (employeeAnswers.name === 'New Manager') {
                 // ask another question to get New Managers Name,
@@ -55,24 +56,23 @@ async function addEmployee(connection) {
 
             if (employeeAnswers.name !== 'None') {
                 let managerId = allManagers.find(managerItem => managerItem.name === employeeAnswers.name);
+            }
 
-                console.log("Update database with ", employeeAnswers.firstName, employeeAnswers.lastName, roleId.id, managerId.name);
-
-                // connection.query(
-                //      'INSERT INTO employee (firstName, lastName, role_id, department_id) VALUES (?,?,?,?)',
-                //     [employeeAnswers.firstName, employeeAnswers.lastName, roleId.id, roleId.departmentId],
-                //      function (error, results) {
-                //          console.log(`${results.affectedRows} employee inserted!\n`);
-                //     }
-                // );
+            //console.log("Update database with ", employeeAnswers.firstName, employeeAnswers.lastName, roleId.id, managerId);
+            try {
+                connection.query(
+                    'INSERT INTO employee (firstName, lastName, roleId, managerId) VALUES (?,?,?,?)',
+                    [employeeAnswers.firstName, employeeAnswers.lastName, roleId.id, managerId]);
                 mainMenu();
+            } catch {
+                console.log('Error updating EMPLOYEE table, error is ', error);
             }
 
         } catch (error) {
-            console.log('error is ', error);
+            console.log('Error reading MANAGER table error is ', error);
         }
     } catch (error) {
-        console.log('error is ', error);
+        console.log('Error reading ROLE table, error is ', error);
     }
 }
 
@@ -94,6 +94,7 @@ async function mainMenu(connection) {
             addEmployee(connection);
             break;
         case "Remove an Employee":
+            removeEmployee(connection);
             console.log("Switching to Remove an Employee");
             break;
         case "Update Employee Role":
