@@ -4,14 +4,75 @@ const getConnection = require("./get-connection");
 
 const Questions = require('./lib/questions');
 const removeEmployee = require('./lib/removeEmployee.js');
-const e = require('express');
+ 
+async function updateEmployeeRole(connection) {
+    try {
+        const result = await connection.query("SELECT * FROM employee",);
+        // convert the first element in the result array
+        let allEmployees = Object.values(JSON.parse(JSON.stringify(result[0])));
+        let employeeId = [];
+        let employeeRoleId = [];
+        let employeeList = [];
 
+        for (i = 0; i < allEmployees.length; i++) {
+            employeeId.push(allEmployees[i].id);
+            employeeRoleId.push(allEmployees[i].roleId);
+            employeeList.push(allEmployees[i].firstName + ' ' + allEmployees[i].lastName);
+        };
+
+        const updateEmployeeAnswers = await inquirer.prompt(
+            {
+                type: "list",
+                message: "Which employee do you want to update the role for",
+                name: "name",
+                choices: employeeList
+            }
+        );
+
+        let index = employeeList.indexOf(updateEmployeeAnswers.name);
+
+        try {
+            const result = await connection.query('SELECT * FROM role');
+
+            let allRoles = Object.values(JSON.parse(JSON.stringify(result[0])));
+
+            const roleTitles = allRoles.map(qs => qs.title);
+
+            let messageText = "Which new role do you want for " + updateEmployeeAnswers.name;
+
+            const updateRoleAnswers = await inquirer.prompt(
+                {
+                    type: "list",
+                    message: messageText,
+                    name: "title",
+                    choices: roleTitles
+                }
+            );
+
+            let roleId = allRoles.find(roleItem => roleItem.title === updateRoleAnswers.title);
+
+            try {
+                const result = await connection.query(
+                    'UPDATE employee SET roleId=? WHERE id=?', [roleId.id, employeeId[index]]
+                );
+
+                mainMenu();
+
+            } catch (error) {
+                console.log('Error in updateEmployeeRole updating Role in EMPLOYEE table, error is ', error);
+            }
+        } catch (error) {
+            console.log('Error in updateEmployeeRole reading Role in ROLE table, error is ', error);
+        }
+    } catch (error) {
+        console.log('Error in updateEmployeeRole reading EMPLOYEE table, error is ', error);
+    }
+}
 async function addEmployee(connection) {
     try {
         const result = await connection.query("SELECT * FROM role",);
         // convert the first element in the result array
         let allRoles = Object.values(JSON.parse(JSON.stringify(result[0])));
-        //console.log("Roles", allRoles);
         const roleTitles = allRoles.map(qs => qs.title);
         try {
             const result = await connection.query("SELECT * FROM manager");
@@ -19,7 +80,6 @@ async function addEmployee(connection) {
 
             let managerList = allManagers.map(qs => qs.name);
             managerList.push('None', 'New Manager');
-            //console.log('Manager List ', managerList);
             const employeeQuestions = Questions.employeeQuestions.concat(
                 {
                     type: "list",
@@ -33,14 +93,8 @@ async function addEmployee(connection) {
                     choices: managerList
                 }
             )
-            //Get the list of role titles from roles table;
 
             const employeeAnswers = await inquirer.prompt(employeeQuestions);
-
-            //Find the role in the roles table and get the ID 
-            //From allRoles, get the id from the Role table and make this a foreign key in the employee table
-            //Using the department_ID from the role table get the managers ID from the department table
-            //Update the employee table  with firstname, lastname and roleID
 
             let roleId = allRoles.find(roleItem => roleItem.title === employeeAnswers.title);
             let managerId = null;
@@ -58,21 +112,21 @@ async function addEmployee(connection) {
                 let managerId = allManagers.find(managerItem => managerItem.name === employeeAnswers.name);
             }
 
-            //console.log("Update database with ", employeeAnswers.firstName, employeeAnswers.lastName, roleId.id, managerId);
             try {
                 connection.query(
                     'INSERT INTO employee (firstName, lastName, roleId, managerId) VALUES (?,?,?,?)',
                     [employeeAnswers.firstName, employeeAnswers.lastName, roleId.id, managerId]);
-                mainMenu();
-            } catch {
-                console.log('Error updating EMPLOYEE table, error is ', error);
-            }
 
+                mainMenu();
+
+            } catch (error) {
+                console.log('Error in addEmployee updating EMPLOYEE table, error is ', error);
+            }
         } catch (error) {
-            console.log('Error reading MANAGER table error is ', error);
+            console.log('Error in addEmployee reading MANAGER table error is ', error);
         }
     } catch (error) {
-        console.log('Error reading ROLE table, error is ', error);
+        console.log('Error in addEmployee reading ROLE table, error is ', error);
     }
 }
 
@@ -98,6 +152,7 @@ async function mainMenu(connection) {
             console.log("Switching to Remove an Employee");
             break;
         case "Update Employee Role":
+            updateEmployeeRole(connection);
             console.log("Switching to Update Employee Role");
             break;
         case "Update Emplyee Manager":
