@@ -2,75 +2,15 @@ const mysql = require('mysql');
 const inquirer = require('inquirer');
 const getConnection = require("./get-connection");
 
+const cTable = require('console.table');
 const Questions = require('./lib/questions');
-const removeEmployee = require('./lib/removeEmployee.js');
- 
-async function updateEmployeeRole(connection) {
-    try {
-        const result = await connection.query("SELECT * FROM employee",);
-        // convert the first element in the result array
-        let allEmployees = Object.values(JSON.parse(JSON.stringify(result[0])));
-        let employeeId = [];
-        let employeeRoleId = [];
-        let employeeList = [];
+const removeEmployee = require('./lib/remove-employee');
+const updateEmployeeRole = require('./lib/update-employee-role');
+const viewAllEmployees = require('./lib/view-all-employees');
 
-        for (i = 0; i < allEmployees.length; i++) {
-            employeeId.push(allEmployees[i].id);
-            employeeRoleId.push(allEmployees[i].roleId);
-            employeeList.push(allEmployees[i].firstName + ' ' + allEmployees[i].lastName);
-        };
-
-        const updateEmployeeAnswers = await inquirer.prompt(
-            {
-                type: "list",
-                message: "Which employee do you want to update the role for",
-                name: "name",
-                choices: employeeList
-            }
-        );
-
-        let index = employeeList.indexOf(updateEmployeeAnswers.name);
-
-        try {
-            const result = await connection.query('SELECT * FROM role');
-
-            let allRoles = Object.values(JSON.parse(JSON.stringify(result[0])));
-
-            const roleTitles = allRoles.map(qs => qs.title);
-
-            let messageText = "Which new role do you want for " + updateEmployeeAnswers.name;
-
-            const updateRoleAnswers = await inquirer.prompt(
-                {
-                    type: "list",
-                    message: messageText,
-                    name: "title",
-                    choices: roleTitles
-                }
-            );
-
-            let roleId = allRoles.find(roleItem => roleItem.title === updateRoleAnswers.title);
-
-            try {
-                const result = await connection.query(
-                    'UPDATE employee SET roleId=? WHERE id=?', [roleId.id, employeeId[index]]
-                );
-
-                mainMenu();
-
-            } catch (error) {
-                console.log('Error in updateEmployeeRole updating Role in EMPLOYEE table, error is ', error);
-            }
-        } catch (error) {
-            console.log('Error in updateEmployeeRole reading Role in ROLE table, error is ', error);
-        }
-    } catch (error) {
-        console.log('Error in updateEmployeeRole reading EMPLOYEE table, error is ', error);
-    }
-}
 async function addEmployee(connection) {
     try {
-        const result = await connection.query("SELECT * FROM role",);
+        const result = await connection.query("SELECT * FROM roles",);
         // convert the first element in the result array
         let allRoles = Object.values(JSON.parse(JSON.stringify(result[0])));
         const roleTitles = allRoles.map(qs => qs.title);
@@ -126,7 +66,7 @@ async function addEmployee(connection) {
             console.log('Error in addEmployee reading MANAGER table error is ', error);
         }
     } catch (error) {
-        console.log('Error in addEmployee reading ROLE table, error is ', error);
+        console.log('Error in addEmployee reading ROLES table, error is ', error);
     }
 }
 
@@ -135,7 +75,7 @@ async function mainMenu(connection) {
     const mainMenuAnswers = await inquirer.prompt(questions)
     switch (mainMenuAnswers.selection) {
         case "View all Employees":
-            console.log("Switching to View all Employees");
+            viewAllEmployees(connection);
             break;
         case "View all Employees by Deparment":
             console.log("Switching to View all Employees by Deparment");
@@ -144,32 +84,30 @@ async function mainMenu(connection) {
             console.log("Switching to View all Employees by Manager");
             break;
         case "Add an Employee":
-            console.log("Switching to Add an Employee");
             addEmployee(connection);
             break;
         case "Remove an Employee":
             removeEmployee(connection);
-            console.log("Switching to Remove an Employee");
             break;
         case "Update Employee Role":
             updateEmployeeRole(connection);
-            console.log("Switching to Update Employee Role");
             break;
-        case "Update Emplyee Manager":
-            console.log("Switching to Update Emplyee Manager");
+        case "Update Employee Manager":
+            console.log("Switching to Update Employee Manager");
             break;
         case "Exit":
             console.log("Switching to Exit");
-            //  connection.end();
+            connection.end();
             break;
         default:
             console.log("Nothing switched", mainMenuAnswers.selection);
     }
+    
 }
 
 async function main() {
     const connection = await getConnection();
-    mainMenu(connection)
+    mainMenu(connection);
 }
 
 main();
