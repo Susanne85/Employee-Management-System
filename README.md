@@ -11,6 +11,9 @@ updateEmployeeRole
 
 The link to the GITHUB page is : https://github.com/Susanne85/employee-management-system
 
+The link below is to run the video demonstrating the application.
+<a href="https://drive.google.com/uc?export=view&id=17vZgROdwm6KkaWraAWmep2MXuYzZekQi"><img src="https://drive.google.com/uc?export=view&id=17vZgROdwm6KkaWraAWmep2MXuYzZekQi" title="Employee Management"/>
+
 
 **Technologies Utilised**
 
