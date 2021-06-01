@@ -34,6 +34,7 @@ async function mainMenu(connection) {
         case "Remove an Employee":
             await removeEmployee(connection);
             mainMenu(connection);
+            break;
         case "Update Employee Role":
             await updateEmployeeRole(connection);
             mainMenu(connection);
