@@ -61,18 +61,17 @@ SELECT
   *
 from
   employee_management_db.department;
-CREATE TABLE employee_management_db.manager (
-    id INT NOT NULL AUTO_INCREMENT,
-    name VARCHAR(30) NOT NULL,
-    PRIMARY KEY (id)
-  );
-INSERT INTO
-  employee_management_db.manager (name)
-VALUES
-  ("Stephanie Smith"),
-  ("Freddy Jones"),
-  ("Arthur Smith");
-SELECT
-  *
-from
-  employee_management_db.manager;
+  
+FROM employee_management_db.employee
+LEFT JOIN managers
+ON employee_management_db.employee.id = manager.id;
+
+SELECT a.id AS "Emp_ID", a.firstName AS "Employee First Name", a.lastName AS "Employee Surname",
+b.id AS "Manager", b.firstName AS "Manager First Name", b.lastName AS "Managers Surname"
+FROM employee_management_db.employee a, employee_management_db.employee b
+WHERE a.managerId = b.id;
+
+SELECT employee.id AS "Emp_ID", employee.firstName AS "Employee First Name", employee.lastName AS "Employee Surname",
+        manager.id AS "Manager", manager.firstName AS "Manager First Name", manager.lastName AS "Managers Surname"
+        FROM employee, employee manager
+        WHERE employee.managerId = manager.id;

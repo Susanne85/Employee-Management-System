@@ -20,6 +20,11 @@ The link to the GITHUB page is : https://github.com/Susanne85/employee-managemen
 
 . Javascript
 
+**Execution of Application**
+
+1.  Clone the repository
+2.  Change into the directory that the application was cloned into and Run npm i to install node modules.
+3.  On the commange line enter npm start which will invoke the application.
 
 **Application Display**
 
