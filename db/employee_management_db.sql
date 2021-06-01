@@ -40,7 +40,8 @@ CREATE TABLE employee_management_db.roles (
 INSERT INTO
   employee_management_db.roles (title, salary, departmentId)
 VALUES
-  ("SalesLead", "50000", 1),("Sales Person", "80000", 1),("Lawyer", "60000", 4);
+  ("Sales Lead", "50000", 1),("Sales Person", "80000", 1),("Lawyer", "60000", 4),("Lead Engineer", "80000", 2),("Software Engingeer", "60000", 2),("Accountant", "60000",3);
+
 SELECT
   *
 from
